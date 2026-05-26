@@ -51,3 +51,12 @@ def drive_straight(drive_speed, direction):
     motor.front_right(drive_speed_direction)
     motor.rear_left(drive_speed_direction)
     motor.rear_right(drive_speed_direction)
+
+def line_detection_start_driving():
+    while True:
+        if sensor.sensor_line("mid"):
+            drive_straight(50, "f")
+        else:
+            stop_all_wheels()
+
+line_detection_start_driving()
