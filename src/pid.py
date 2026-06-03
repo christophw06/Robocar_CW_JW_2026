@@ -7,10 +7,14 @@ sensor_values = []
 
 
 def get_value_sensor_in_list(
-    sensor_value_of_func, readin_timestep_in_ms, number_of_values_to_readin
+    sensor_function,
+    sensor_orientation,
+    readin_timestep_in_ms,
+    number_of_values_to_readin,
 ):
     global sensor_values
     while True:
+        sensor_value_of_func = sensor_function(sensor_orientation)
         number_of_values = len(sensor_values)
         if sensor_value_of_func:
             sensor_value_converted = 1
@@ -25,6 +29,7 @@ def get_value_sensor_in_list(
             sensor_values.append(sensor_value_converted)
             time.sleep((readin_timestep_in_ms / number_of_values_to_readin) / 100)
 
+        print(sensor_values)
 
 
 def average_value(values_list):
@@ -34,7 +39,10 @@ def average_value(values_list):
     return average_value
 
 
-values_to_process = threading.Thread(args=(sensor.sensor_line("mid"), 200, 10))
-average_over_values = threading.Thread(args=(sensor_values))
+values_to_process = threading.Thread(
+    target=get_value_sensor_in_list,
+    args=(sensor.sensor_line, "mid", 200, 10),
+)
+
 
 values_to_process.start()
