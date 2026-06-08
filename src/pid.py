@@ -70,7 +70,7 @@ def get_value_sensor_in_list_left(
 
     while True:
         sensor_value_of_func = sensor_function("left")
-        number_of_values = sensor_values_mid.qsize()
+        number_of_values = sensor_values_left.qsize()
         if sensor_value_of_func:
             sensor_value_converted = 1
         else:
@@ -101,17 +101,17 @@ def calc_average_value(values_list, orientation):
 
 values_to_process_mid = threading.Thread(
     target=get_value_sensor_in_list_mid,
-    args=(sensor.sensor_line, 200, 10),
+    args=(sensor.sensor_line, 100, 5),
 )
 
 values_to_process_right = threading.Thread(
     target=get_value_sensor_in_list_right,
-    args=(sensor.sensor_line, 200, 10),
+    args=(sensor.sensor_line, 100, 5),
 )
 
 values_to_process_left = threading.Thread(
     target=get_value_sensor_in_list_left,
-    args=(sensor.sensor_line, 200, 10),
+    args=(sensor.sensor_line, 100, 5),
 )
 
 calculate_average_mid = threading.Thread(

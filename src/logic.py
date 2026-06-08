@@ -1,11 +1,13 @@
+import queue
 import threading
-import time
 
 import motor
 import pid
-import sensor
 
 motor.init()
+position_of_line = queue.Queue(maxsize=1)
+speed_left_wheel = queue.Queue(maxsize=1)
+speed_right_wheel = queue.Queue(maxsize=1)
 
 
 def stop_all_wheels():
@@ -15,96 +17,53 @@ def stop_all_wheels():
     motor.rear_right(0)
 
 
-def turn_right(turn_speed_right, turn_speed_left):
-    right_wheel_speed = 0
-    left_wheel_speed = 0
-
-    if (
-        turn_speed_right > turn_speed_left
-        and 0 <= abs(turn_speed_left) <= 100
-        and 0 < abs(turn_speed_right) <= 100
-    ):
-        right_wheel_speed = int(turn_speed_right)
-        left_wheel_speed = int(turn_speed_left)
-
-    motor.front_left(left_wheel_speed)
-    motor.front_right(right_wheel_speed)
-    motor.rear_left(left_wheel_speed)
-    motor.rear_right(right_wheel_speed)
-
-
-def turn_left(turn_speed_left, turn_speed_right):
-    right_wheel_speed = 0
-    left_wheel_speed = 0
-    if (
-        """turn_speed_left > turn_speed_right"""
-        and 0 < abs(turn_speed_left) <= 100
-        and 0 <= abs(turn_speed_right) <= 100
-    ):
-        right_wheel_speed = int(turn_speed_right)
-        left_wheel_speed = int(turn_speed_left)
-
-    motor.front_left(left_wheel_speed)
-    motor.front_right(right_wheel_speed)
-    motor.rear_left(left_wheel_speed)
-    motor.rear_right(right_wheel_speed)
-
-
-def drive_straight(drive_speed, direction):
-    drive_speed_direction = 0
-    if direction == "f":
-        drive_speed_direction = abs(drive_speed)
-    elif direction == "r":
-        drive_speed_direction = (-1) * abs(drive_speed)
-    else:
-        drive_speed_direction = 0
-
-    motor.front_left(drive_speed_direction)
-    motor.front_right(drive_speed_direction)
-    motor.rear_left(drive_speed_direction)
-    motor.rear_right(drive_speed_direction)
-
-
-def line_detection_start_driving():
+def drive_in_direction(speed_left, speed_right):
     while True:
-        print(pid.average_left)
+        get_speed_input_left = speed_left.get()
+        get_speed_input_right = speed_right.get()
         if (
-            not sensor.sensor_line("left")
-            and not sensor.sensor_line("right")
-            and sensor.sensor_line("mid")
+            0 < abs(get_speed_input_left) <= 100
+            and 0 <= abs(get_speed_input_right) <= 100
         ):
-            drive_straight(100 * pid.average_mid, "f")
-            time.sleep(0.1)
-            stop_all_wheels()
-        elif not sensor.sensor_line("left") and sensor.sensor_line("right"):
-            turn_left(100 * pid.average_left, 0)
-        elif sensor.sensor_line("left") and not sensor.sensor_line("right"):
-            turn_right(100 * pid.average_right, 0)
-        elif (
-            sensor.sensor_line("left")
-            and sensor.sensor_line("right")
-            and sensor.sensor_line("mid")
-        ):
-            stop_all_wheels()
+            right_wheel_speed = int(get_speed_input_right)
+            left_wheel_speed = int(get_speed_input_left)
+
+        motor.front_left(left_wheel_speed)
+        motor.front_right(right_wheel_speed)
+        motor.rear_left(left_wheel_speed)
+        motor.rear_right(right_wheel_speed)
 
 
-"""Hier weiterarbeiten und die geradeaus fahrt sinnvoll einbauen.
-ACHTUNG!!!: elektronikfehler Motoren gehen aus da Datenmenge wahrscheinlich zu groß"""
+def calculate_position():
+    global position_of_line
 
-
-def scaled_right_left():
     while True:
-        wheel_right = (-100 * pid.average_right) + 100
-        wheel_left = (-100 * pid.average_left) + 100
-        print(pid.average_right, pid.average_left)
-        turn_left(wheel_left, wheel_right)
+        position_value = (
+            (-1 * pid.average_left) + (0 * pid.average_mid) + (1 * pid.average_right)
+        )
+        position_of_line.put(position_value)
+        # -1 line is left, 0 line ist middle, 1 line is right
 
 
-start_driving = threading.Thread(target=line_detection_start_driving)
-scaled = threading.Thread(target=scaled_right_left)
+def set_speed_to_drive(base_speed, turn_faktor):
+    global position_of_line, speed_right_wheel, speed_left_wheel
+    while True:
+        position = position_of_line.get()
+        speed_left = base_speed + (position * turn_faktor)
+        speed_right = base_speed - (position * turn_faktor)
+        speed_left_wheel.put(speed_left)
+        speed_right_wheel.put(speed_right)
 
-# start_driving.start()
-scaled.start()
+
+direction_calculation = threading.Thread(target=calculate_position)
+speed_setting = threading.Thread(target=set_speed_to_drive, args=(30, 30))
+drive_test = threading.Thread(
+    target=drive_in_direction, args=(speed_left_wheel, speed_right_wheel)
+)
+
+direction_calculation.start()
+speed_setting.start()
+drive_test.start()
 pid.values_to_process_mid.start()
 pid.calculate_average_mid.start()
 pid.values_to_process_right.start()
