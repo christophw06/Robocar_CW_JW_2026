@@ -1,47 +1,38 @@
 import queue
 import threading
 
-import motor
-import pid
+import sensor
 
-motor.init()
 position_of_line = queue.Queue(maxsize=1)
 speed_left_wheel = queue.Queue(maxsize=1)
 speed_right_wheel = queue.Queue(maxsize=1)
+
+
 last_position_for_pid = 0.0
+average_mid = 0
+average_right = 0
+average_left = 0
 
 
-def stop_all_wheels():
-    motor.front_left(0)
-    motor.front_right(0)
-    motor.rear_left(0)
-    motor.rear_right(0)
-
-
-def drive_in_direction(speed_left, speed_right):
+def calc_average_value(values_list, orientation):
     while True:
-        get_speed_input_left = speed_left.get()
-        get_speed_input_right = speed_right.get()
-        if (
-            0 < abs(get_speed_input_left) <= 100
-            and 0 <= abs(get_speed_input_right) <= 100
-        ):
-            right_wheel_speed = int(get_speed_input_right)
-            left_wheel_speed = int(get_speed_input_left)
-
-        motor.front_left(left_wheel_speed)
-        motor.front_right(right_wheel_speed)
-        motor.rear_left(left_wheel_speed)
-        motor.rear_right(right_wheel_speed)
+        number_to_divide = values_list.qsize()
+        if orientation == "right" and number_to_divide > 0:
+            global average_right
+            average_right = round(sum(list(values_list.queue)) / number_to_divide, 1)
+        elif orientation == "left" and number_to_divide > 0:
+            global average_left
+            average_left = round(sum(list(values_list.queue)) / number_to_divide, 1)
+        elif orientation == "mid" and number_to_divide > 0:
+            global average_mid
+            average_mid = round(sum(list(values_list.queue)) / number_to_divide, 1)
 
 
 def calculate_position():
-    global position_of_line
+    global position_of_line, average_left, average_mid
 
     while True:
-        position_value = (
-            (-1 * pid.average_left) + (0 * pid.average_mid) + (1 * pid.average_right)
-        )
+        position_value = (-1 * average_left) + (1 * average_mid)
         position_of_line.put(position_value)
         # -1 line is left, 0 line ist middle, 1 line is right
 
@@ -66,16 +57,20 @@ def pid_drive(base_speed, kp, ki, kd):
 
 direction_calculation = threading.Thread(target=calculate_position)
 speed_setting = threading.Thread(target=pid_drive, args=(10, 30, 0.5, 5))
-drive_test = threading.Thread(
-    target=drive_in_direction, args=(speed_left_wheel, speed_right_wheel)
+calculate_average_mid = threading.Thread(
+    target=calc_average_value, args=(sensor.sensor_values_mid, "mid")
+)
+
+"""calculate_average_right = threading.Thread(
+    target=calc_average_value, args=(sensor.sensor_values_right, "right")
+)"""
+
+calculate_average_left = threading.Thread(
+    target=calc_average_value, args=(sensor.sensor_values_left, "left")
 )
 
 direction_calculation.start()
 speed_setting.start()
-drive_test.start()
-pid.values_to_process_mid.start()
-pid.calculate_average_mid.start()
-pid.values_to_process_right.start()
-pid.calculate_average_right.start()
-pid.values_to_process_left.start()
-pid.calculate_average_left.start()
+calculate_average_mid.start()
+"""calculate_average_right.start()"""
+calculate_average_left.start()
