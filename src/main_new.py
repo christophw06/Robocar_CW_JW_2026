@@ -1,13 +1,13 @@
 import json
 import os
 
-import logic_new
+import logic
 import motor
 
 
 def get_values_of_json(needed_value):
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    path_json_file = os.path.join(base_dir, "config_new.json")
+    path_json_file = os.path.join(base_dir, "config.json")
     with open(path_json_file, "r") as config_file:
         config_data = json.load(config_file)
     return config_data[str(needed_value)]
@@ -25,7 +25,7 @@ def start_driving():
     ks = get_values_of_json("dynamicspeed factor")
 
     while True:
-        left_side_speed, right_side_speed = logic_new.pid_speed_calculation(
+        left_side_speed, right_side_speed = logic.pid_speed_calculation(
             refreshrate, base_speed, kp, ki, kd, ks
         )
 

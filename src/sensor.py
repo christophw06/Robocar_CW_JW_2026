@@ -1,5 +1,3 @@
-import time
-
 from gpiozero import LineSensor
 
 linesensor_right = LineSensor(23)

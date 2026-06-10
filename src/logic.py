@@ -1,6 +1,6 @@
 import time
 
-import sensor_new
+import sensor
 
 last_pos_for_pid = 0.0
 integral = 0.0
@@ -12,11 +12,11 @@ def pid_speed_calculation(refreshrate_in_Hz, base_speed, kp, ki, kd, ks):
     integral_reset = 0
     sleep_time_refreshrate = 1 / refreshrate_in_Hz
 
-    value_sensor_right = sensor_new.pos_sensor_over_line("right")
-    value_sensor_left = sensor_new.pos_sensor_over_line("left")
-    value_sensor_mid = sensor_new.pos_sensor_over_line("mid")
+    value_sensor_right = sensor.pos_sensor_over_line("right")
+    value_sensor_left = sensor.pos_sensor_over_line("left")
+    value_sensor_mid = sensor.pos_sensor_over_line("mid")
 
-    position = sensor_new.detect_position(
+    position = sensor.detect_position(
         value_sensor_left, value_sensor_mid, value_sensor_right
     )
 
