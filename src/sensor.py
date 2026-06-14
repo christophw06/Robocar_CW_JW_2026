@@ -1,8 +1,13 @@
 from gpiozero import LineSensor
 
-linesensor_right = LineSensor(23)
-linesensor_mid = LineSensor(15)
-linesensor_left = LineSensor(14)
+# declare pins for linesensor
+pin_sensor_right = 23
+pin_sensor_mid = 15
+pin_sensor_left = 14
+
+linesensor_right = LineSensor(pin_sensor_right)
+linesensor_mid = LineSensor(pin_sensor_mid)
+linesensor_left = LineSensor(pin_sensor_left)
 
 
 def pos_sensor_over_line(sensor_orientation):
@@ -17,7 +22,7 @@ def pos_sensor_over_line(sensor_orientation):
         return sensor_value_mid
 
 
-def detect_position(sensor_left, sensor_mid, sensor_right):
+def interpret_position(sensor_left, sensor_mid, sensor_right):
     FULL_LEFT = -1.0
     HALF_LEFT = -0.5
     MID = 0.0

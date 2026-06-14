@@ -6,13 +6,15 @@ import motor
 
 
 def get_values_of_json(needed_value):
+    json_file = "config.json"
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    path_json_file = os.path.join(base_dir, "config.json")
+    path_json_file = os.path.join(base_dir, json_file)
     with open(path_json_file, "r") as config_file:
         config_data = json.load(config_file)
     return config_data[str(needed_value)]
 
 
+# initialize motors, loops through the PID and set motor speed
 def start_driving():
     motor.init()
     LIMITER_MAX = 100
