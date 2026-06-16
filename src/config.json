@@ -4,5 +4,6 @@
     "proportional factor": 20,
     "integral factor": 0.05,
     "derivativ factor": 15,
-    "dynamicspeed factor": 15
+    "dynamicspeed factor": 15,
+    "turn factor": 3
 }
